@@ -1,0 +1,189 @@
+{* This is the welcome page, you can delete it *}
+
+{block content}
+
+<div class="container">
+
+	<h4 n:block="title" class="header">Značky</h4>
+
+	<div class="table-wrapper">
+		<!-- New brand modal trigger -->
+		<a class="waves-effect waves-light btn modal-trigger blue darken-1 add-brand-btn" href="#addBrand">+ Přidat značku</a>
+
+		{snippet brandsTable}
+		<table class="highlight">
+			<thead>
+				<tr>
+					<th>
+						Název 
+						<a n:href="default, order: 'ASC', page: $paginator->getPage(), itemsPerPage: $paginator->getItemsPerPage()">
+							<i class="material-icons">arrow_upward</i>
+						</a>
+						<a n:href="default, order: 'DESC', page: $paginator->getPage(), itemsPerPage: $paginator->getItemsPerPage()">
+							<i class="material-icons">arrow_downward</i>
+						</a>
+					</th>
+					<th class="actions-header">Akce</th>
+				</tr>
+			</thead>
+
+			<tbody>
+				{foreach $brands as $brand}
+					<tr>
+						<td>{$brand->title}</td>
+						<td class="actions">
+							<a class="modal-trigger delete-brand" href="#deleteBrand" data-id="{$brand->id}" data-title="{$brand->title}">Smazat</a>
+							<a class="modal-trigger edit-brand" href="#editBrand" data-id="{$brand->id}" data-title="{$brand->title}">Editovat</a>
+						</td>
+					</tr>
+				{/foreach}
+			</tbody>
+		</table>
+		{/snippet}
+
+		<div class="pagination">
+			{if !$paginator->isFirst()}
+				<a n:href="default, page: 1, itemsPerPage: $paginator->getItemsPerPage()">První</a>
+				&nbsp;|&nbsp;
+				<a n:href="default, page: $paginator->page - 1, itemsPerPage: $paginator->getItemsPerPage()">Předchozí</a>
+				&nbsp;|&nbsp;
+			{/if}
+
+			Stránka {$paginator->getPage()} z {$paginator->getPageCount()}
+
+			{if !$paginator->isLast()}
+				&nbsp;|&nbsp;
+				<a n:href="default, page: $paginator->getPage() + 1, itemsPerPage: $paginator->getItemsPerPage()">Další</a>
+				&nbsp;|&nbsp;
+				<a n:href="default, page: $paginator->getPageCount(), itemsPerPage: $paginator->getItemsPerPage()">Poslední</a>
+			{/if}
+		</div>
+		<div class="items-per-page">
+			<a n:href="default, page: $paginator->getPage(), itemsPerPage: 3">3</a>
+			<a n:href="default, page: $paginator->getPage(), itemsPerPage: 5">5</a>
+			<a n:href="default, page: $paginator->getPage(), itemsPerPage: 10">10</a>
+		</div>
+	</div>
+
+		
+</div>
+
+<!-- New brand modal body -->
+<div id="addBrand" class="modal">
+	<div class="modal-content">
+		<h4>Přidat značku</h4>
+		<input type="text" id="addBrandTitleInput" placeholder="Zadejte nazev značky" autofocus>
+	</div>
+	<div class="modal-footer">
+		<a  class="confirm modal-close waves-effect blue darken-1 btn">Potvrdit</a>
+		<a href="#!" class="modal-close waves-effect waves-red btn-flat">Zrusit</a>
+	</div>
+</div>
+
+<!-- Edit brand modal body -->
+<div id="editBrand" class="modal">
+	<div class="modal-content">
+		<h4>Editovat značku</h4>
+		<input type="text" id="editBrandTitleInput" autofocus>
+	</div>
+	<div class="modal-footer">
+		<a  class="confirm modal-close waves-effect blue darken-1 btn">Potvrdit</a>
+		<a href="#!" class="modal-close waves-effect waves-red btn-flat">Zrusit</a>
+	</div>
+</div>
+
+
+<!-- Delete brand modal body -->
+<div id="deleteBrand" class="modal">
+	<div class="modal-content">
+		<h4>Smazat značku <span class="brand-title"></span> ?</h4>
+	</div>
+	<div class="modal-footer">
+		<a class="confirm modal-close waves-effect blue darken-1 btn">Potvrdit</a>
+		<a href="#!" class="modal-close waves-effect waves-red btn-flat">Zrusit</a>
+	</div>
+</div>
+
+<script>
+	$(document).ready(function(){
+    	$('.modal').modal();
+
+		//delete brand
+		$('.delete-brand').click(function(){
+			const brandId = $(this).attr('data-id');
+			$('#deleteBrand a.confirm').attr('data-id', brandId);
+			$('#deleteBrand span.brand-title').html($(this).attr('data-title'))
+		});
+
+		$('#deleteBrand a.confirm').click(function(e){
+			e.preventDefault();
+			
+			let brandId = $(this).attr('data-id');
+			let link = {link deleteBrand! 'id'};
+			let url = link.replace('id', brandId);
+			
+			$.get(url)
+			.done(function(res){
+				if(res == 1) {
+					location.reload();
+				}
+			});
+		});
+
+		// add brand
+		$('#addBrand a.confirm').click(function(e){
+			e.preventDefault();
+			
+			let brandTitle = $('#addBrandTitleInput').val();
+			let link = {link addBrand! 'title'};
+			let url = link.replace('title', brandTitle);
+			
+			$.get(url)
+			.done(function(res){
+				console.log(res);
+				if(isNaN(res)) {
+					console.error(res);
+					alert("Error: " + res.errorInfo[2]);
+				} else {
+					location.reload();
+				}
+			});
+		});
+
+		// edit brand
+		$('.edit-brand').click(function(){
+			const brandId = $(this).attr('data-id');
+			$('#editBrand a.confirm').attr('data-id', brandId);
+			$('#editBrand input').val($(this).attr('data-title'));
+		});
+
+		$('#editBrand a.confirm').click(function(e){
+			e.preventDefault();
+			
+			let brandId = $(this).attr('data-id');
+			let newBrandTitle = $('#editBrand input').val();
+			let link = {link editBrand! 'id', 'newBrandTitle'};
+
+			let url = link.replace('id', brandId);
+			console.log(url);
+
+			url = url.replace('newBrandTitle', newBrandTitle);
+			console.log(url);
+
+			
+			$.get(url)
+			.done(function(res){
+				console.log(res);
+				if(isNaN(res)) {
+					console.error(res);
+					alert("Error: " + res.errorInfo[2]);
+				} else {
+					location.reload();
+				}
+			});
+		});
+
+
+	}); 
+</script>
+{/block}
